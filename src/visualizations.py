@@ -219,7 +219,9 @@ def plot_bootstrap_ci(bootstrap_results):
     uppers = [r["upper"] for r in bootstrap_results.values()]
     x_pos = np.arange(n)
     colors_bar = COLORS_POOL[:n]
-    ax.bar(x_pos, means, yerr=[np.array(means) - np.array(lowers), np.array(uppers) - np.array(means)],
+    lower_err = np.maximum(0, np.array(means) - np.array(lowers))
+    upper_err = np.maximum(0, np.array(uppers) - np.array(means))
+    ax.bar(x_pos, means, yerr=(lower_err, upper_err),
            color=colors_bar, alpha=0.8, capsize=4, edgecolor=THEME["grid"])
     ax.set_xticks(x_pos)
     ax.set_xticklabels(names, rotation=20, fontsize=8)

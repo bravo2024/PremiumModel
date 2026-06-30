@@ -56,21 +56,22 @@ def lift_chart(y_true, y_pred, n_deciles=10):
 
 
 def bootstrap_ci(y_true, y_pred, n_iter=1000, alpha=0.05):
-    y_true = np.asarray(y_true, float)
-    y_pred = np.asarray(y_pred, float)
+    y_true = np.asarray(y_true, float).ravel()
+    y_pred = np.asarray(y_pred, float).ravel()
     rng = np.random.default_rng(42)
     n = len(y_true)
-    scores = np.zeros(n_iter)
+    scores = np.full(n_iter, np.nan)
     for i in range(n_iter):
         idx = rng.integers(0, n, n)
-        if y_true[idx].std() > 0 and y_pred[idx].std() > 0:
+        if y_true[idx].std() > 1e-10 and y_pred[idx].std() > 1e-10:
             scores[i] = r2_score(y_true[idx], y_pred[idx])
-        else:
-            scores[i] = np.nan
     scores = scores[~np.isnan(scores)]
+    if len(scores) < 10:
+        return float(r2_score(y_true, y_pred)), float(r2_score(y_true, y_pred))
+    mean_est = float(np.mean(scores))
     lower = float(np.percentile(scores, 100 * alpha / 2))
     upper = float(np.percentile(scores, 100 * (1 - alpha / 2)))
-    return lower, upper
+    return max(lower, -1.0), min(upper, 1.0)
 
 
 def partial_dependence(model_fn, X, feature_idx, grid_size=50):

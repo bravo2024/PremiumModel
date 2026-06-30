@@ -162,10 +162,10 @@ with t2:
     st.dataframe(pd.DataFrame(cv_rows).set_index("Model"), use_container_width=True)
     st.subheader("Bootstrap R\u00b2 Confidence Intervals (n=1,000)")
     boot_results = {}
-    for n in mdl_names:
-        yp = y_preds[n]
+    for nm in mdl_names:
+        yp = y_preds[nm]
         l, u = bootstrap_ci(y_test, yp)
-        boot_results[n] = {"mean": float(np.corrcoef(y_test, yp)[0, 1] ** 2), "lower": l, "upper": u}
+        boot_results[nm] = {"mean": (l + u) / 2, "lower": l, "upper": u}
     st.pyplot(plot_bootstrap_ci(boot_results))
 
 with t3:
