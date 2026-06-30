@@ -281,7 +281,7 @@ with t5:
     st.markdown("**Proxy discrimination check:**")
     for cat in data["categorical_features"]:
         for num in data["numerical_features"]:
-            corr_val = pd.factorize(df[cat])[0].astype(float).corr(df[num])
+            corr_val = float(np.corrcoef(pd.factorize(df[cat])[0].astype(float), df[num].values)[0, 1])
             st.markdown(f"- `{cat}` vs `{num}`: correlation = {corr_val:.3f}")
     st.subheader("Stability Over Time")
     st.markdown("Synthetic time-split: first 70% of rows (train) vs last 30% (test) simulates temporal drift.")
