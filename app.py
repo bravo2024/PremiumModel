@@ -314,7 +314,10 @@ with t6:
     cov_q = st.selectbox("Coverage", df["coverage"].unique())
     exp_q = st.slider("Exposure", 0.5, 1.0, 1.0)
     query = pd.DataFrame([{"age": float(age_q), "territory": terr_q, "coverage": cov_q, "exposure": exp_q}])
-    X_query, _ = _prepare_features({"df": query, "categorical_features": data["categorical_features"], "numerical_features": data["numerical_features"]})
+    ref_rows = df.head(20)
+    combined = pd.concat([ref_rows, query], ignore_index=True)
+    X_combined, _ = _prepare_features({"df": combined, "categorical_features": data["categorical_features"], "numerical_features": data["numerical_features"]})
+    X_query = X_combined[-1:]
     X_query_s = b["scaler"].transform(X_query)
     preds = {}
     for nm in mdl_names:
