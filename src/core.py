@@ -50,6 +50,57 @@ def lift_chart(y_true, y_pred, n_deciles=10):
             "decile": i + 1,
             "actual_sum": float(actual),
             "predicted_sum": float(predicted),
-            "count": end - start,
+            "count": int(end - start),
         })
+    return results
+
+
+def bootstrap_ci(y_true, y_pred, n_iter=1000, alpha=0.05):
+    y_true = np.asarray(y_true, float)
+    y_pred = np.asarray(y_pred, float)
+    rng = np.random.default_rng(42)
+    n = len(y_true)
+    scores = np.zeros(n_iter)
+    for i in range(n_iter):
+        idx = rng.integers(0, n, n)
+        if y_true[idx].std() > 0 and y_pred[idx].std() > 0:
+            scores[i] = r2_score(y_true[idx], y_pred[idx])
+        else:
+            scores[i] = np.nan
+    scores = scores[~np.isnan(scores)]
+    lower = float(np.percentile(scores, 100 * alpha / 2))
+    upper = float(np.percentile(scores, 100 * (1 - alpha / 2)))
+    return lower, upper
+
+
+def partial_dependence(model_fn, X, feature_idx, grid_size=50):
+    X_copy = X.copy()
+    vals = np.linspace(X[:, feature_idx].min(), X[:, feature_idx].max(), grid_size)
+    pd_values = np.zeros(grid_size)
+    for i, v in enumerate(vals):
+        X_perm = X_copy.copy()
+        X_perm[:, feature_idx] = v
+        pd_values[i] = float(np.mean(model_fn(X_perm)))
+    return vals, pd_values
+
+
+def decile_balance(y_true, y_pred):
+    y_true = np.asarray(y_true, float).ravel()
+    y_pred = np.asarray(y_pred, float).ravel()
+    assert len(y_true) == len(y_pred), f"Length mismatch: {len(y_true)} vs {len(y_pred)}"
+    order = np.argsort(y_pred)[::-1]
+    y_true_s = y_true[order]
+    y_pred_s = y_pred[order]
+    n = len(y_true)
+    decile_size = n // 10
+    if decile_size == 0:
+        decile_size = 1
+    results = []
+    for i in range(10):
+        start = i * decile_size
+        end = start + decile_size if i < 9 else n
+        a = y_true_s[start:end].sum()
+        p = y_pred_s[start:end].sum()
+        ratio = float(a / p) if p > 0 else 0.0
+        results.append({"decile": i + 1, "actual": float(a), "predicted": float(p), "ratio": ratio})
     return results
